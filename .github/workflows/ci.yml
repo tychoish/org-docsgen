@@ -27,23 +27,17 @@ jobs:
       - name: Lint Source Code
         uses: tychoish/elisp-ci/lint@main
         with:
-          dependencies:
-            - xtdlib
-            - compat
+          dependencies: "xtdlib compat"
 
       - name: Run ERT Tests
         uses: tychoish/elisp-ci@main
         with:
-          dependencies:
-            - xtdlib
-            - compat
+          dependencies: "xtdlib compat"
 
       - name: Measure Code Coverage
         uses: tychoish/elisp-ci/coverage@main
         with:
-          dependencies:
-            - xtdlib
-            - compat
+          dependencies: "xtdlib compat"
           report-format: "lcov"
           output-file: "coverage/lcov.info"
 
