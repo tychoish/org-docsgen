@@ -37,13 +37,14 @@
 (require 'cl-lib)
 (require 'compat)
 (require 'xtd-project)
+(require 'org)
 (require 'ob)
 (defvar org-confirm-babel-evaluate)
 
 (declare-function org-babel-execute-src-block "ob-core")
 
 (defun org-docsgen--find-el-files ()
-  "Return sorted non-test, non-generated .el files in the current org buffer's directory.
+  "Return non-test, non-generated .el files in current org buffer's directory.
 Excludes test files as well as `-pkg.el' and `-autoloads.el': these are
 generated package metadata, never meant to be `require'd or scanned as
 documentable source (`-pkg.el' in particular is only ever valid as data
@@ -209,7 +210,7 @@ Can be `org' (`file:path::<line>', standard Org-mode, jumps to line in Emacs),
   :group 'org-docsgen)
 
 (defcustom org-docsgen-link-implementation t
-  "Whether and how to link symbol implementations in generated org documentation.
+  "Whether and how to link implementations in generated org documentation.
 If `heading' or t, the heading itself links to the source location.
 If `below', emits an \"- Implementation: ...\" link below the properties drawer.
 If nil, do not include implementation links."
@@ -246,7 +247,8 @@ If nil, do not include implementation links."
   "Format a single symbol NAME of KIND under HEADING.
 DOC-FILTER is passed through to `org-docsgen--format-doc'.
 FILE and LINE, if non-nil, provide the source implementation location.
-LINK-IMPL controls whether to emit an implementation link (defaults to `org-docsgen-link-implementation').
+LINK-IMPL controls whether to emit implementation links (defaults to
+`org-docsgen-link-implementation').
 LINK-STYLE controls the link format (defaults to `org-docsgen-link-style')."
   (let* ((sym (intern name))
          (fn-p (fboundp sym))
@@ -292,7 +294,8 @@ LINK-STYLE controls the link format (defaults to `org-docsgen-link-style')."
 (defun org-docsgen--include-p (name kind autoload-p nil-init-p scope include-kinds namespace)
   "Return non-nil when NAME/KIND should be included in the output.
 AUTOLOAD-P is t when preceded by ;;;###autoload.
-NIL-INIT-P is t when the form is a bare `(defvar NAME nil ...)' forward declaration.
+NIL-INIT-P is t when form is a bare `(defvar NAME nil ...)'
+forward declaration.
 SCOPE, INCLUDE-KINDS, NAMESPACE come from `org-docsgen-run'."
   (and kind
        (string-match-p "\\`[a-zA-Z]" name)
@@ -401,15 +404,15 @@ Returns an alist of (SECTION-NAME-OR-NIL . SYMS) in source order."
     (nreverse sections)))
 
 (defun org-docsgen--partition-by-groups (files group-spec)
-  "Partition FILES into an alist of (GROUP-NAME . GROUP-FILES) based on GROUP-SPEC.
+  "Partition FILES into (GROUP-NAME . GROUP-FILES) based on GROUP-SPEC.
 GROUP-SPEC can be:
   `file'  -- group by each file's base name
   a list  -- list of group specs. Each element can be:
              - a string prefix (e.g. \"agent-shell-menu\")
              - a list/cons (GROUP-NAME . MATCH-PREFIXES-OR-FILES)
-               e.g. (\"agent-shell-queue-persistence\" \"agent-shell-queue-persistence\" \"agent-shell-queue-db\")
-             files are matched against the longest/most specific pattern first,
-             and emitted in the order of GROUP-SPEC."
+               e.g. (\"queue-persistence\" \"queue-db\")
+             files match longest/most specific pattern first,
+             emitted in the order of GROUP-SPEC."
   (cond
    ((eq group-spec 'file)
     (seq-map (lambda (f) (cons (file-name-base f) (list f))) files))
@@ -458,7 +461,8 @@ GROUP-SPEC can be:
 Section headings are emitted at LEVEL+1; symbol headings at LEVEL+2.
 When there are zero or one named sections the section heading is suppressed
 and symbols are emitted at LEVEL+1 instead.  DOC-FILTER is passed through
-to `org-docsgen--format-sym'.  LINK-IMPL controls whether to emit implementation links.
+to `org-docsgen--format-sym'.  LINK-IMPL controls whether to emit
+implementation links.
 LINK-STYLE controls the link URI format."
   (let* ((named-sections (seq-filter #'car sections))
          (flat-p (<= (length named-sections) 1))
