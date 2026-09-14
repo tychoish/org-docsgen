@@ -24,19 +24,32 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - name: Run Tests via ELPAish
-        run: |
-          emacs --batch \
-            -L . \
-            --eval '(progn
-              (require (quote package))
-              (setq package-archives (quote (("gnu" . "https://elpa.gnu.org/packages/")
-                                             ("melpa" . "https://melpa.org/packages/")
-                                             ("elpaish" . "https://tychoish.github.io/elpaish/snapshot/"))))
-              (setq package-unsigned-archives (quote ("elpaish")))
-              (package-initialize)
-              (unless package-archive-contents (package-refresh-contents))
-              (unless (package-installed-p (quote elpaish))
-                (package-install (quote elpaish)))
-              (require (quote elpaish-check))
-              (elpaish-test-package-batch))'
+      - name: Lint Source Code
+        uses: tychoish/elisp-ci/lint@main
+        with:
+          dependencies:
+            - xtdlib
+            - compat
+
+      - name: Run ERT Tests
+        uses: tychoish/elisp-ci@main
+        with:
+          dependencies:
+            - xtdlib
+            - compat
+
+      - name: Measure Code Coverage
+        uses: tychoish/elisp-ci/coverage@main
+        with:
+          dependencies:
+            - xtdlib
+            - compat
+          report-format: "lcov"
+          output-file: "coverage/lcov.info"
+
+      - name: Upload Coverage to Codecov
+        uses: codecov/codecov-action@v5
+        if: ${{ !cancelled() }}
+        with:
+          files: coverage/lcov.info
+          fail_ci_if_error: false
